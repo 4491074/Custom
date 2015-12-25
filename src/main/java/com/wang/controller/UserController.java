@@ -3,11 +3,9 @@ package com.wang.controller;
 import com.alibaba.fastjson.JSONObject;
 import com.wang.domain.User;
 import com.wang.model.Mail;
+import com.wang.model.PhoneMessage;
 import com.wang.serivce.UserService;
-import com.wang.util.AjaxReturn;
-import com.wang.util.MD5Util;
-import com.wang.util.MailSender;
-import com.wang.util.StringUtil;
+import com.wang.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -81,36 +79,46 @@ public class UserController {
     }
 
     /**
-     * 用户注册第一步，获取用户邮箱
-     * 验证用户邮箱格式
+     * 用户注册第一步，获取用户邮箱或者手机号码
+     * 验证用户邮箱、手机格式
      * 验证数据库是否已经注册
      * 产生数字验证码，存入session和application
      * @param request 通过request获取全局变量application和session
-     * @param user_mail 获取用户邮箱
+     * @param account 获取用户邮箱
      * @return 返回结果
      */
     @RequestMapping("register1")
     @ResponseBody
-    public JSONObject register1(HttpServletRequest request, String user_mail){
-        if(!StringUtil.checkEmail(user_mail)){
-            return AjaxReturn.Data2Ajax(0,"邮箱格式错误",null);
+    public JSONObject register1(HttpServletRequest request, String account ,int registerType){
+        if((registerType == 0 && !StringUtil.checkEmail(account)) ||
+           (registerType == 1 && !StringUtil.checkPhoneNumber(account))){
+            return AjaxReturn.Data2Ajax(0,(registerType==0?"邮箱":"手机号码")+"格式错误",null);
         }
-        if(userService.checkMail(user_mail)>0){
-            return AjaxReturn.Data2Ajax(0,"该邮箱已经被注册",null);
+        int haveAccount = userService.checkMailorPhone(registerType,account);
+        if(haveAccount!=0){
+            if (haveAccount == -1)
+                return AjaxReturn.Data2Ajax(0,"注册类型错误",null);
+            return AjaxReturn.Data2Ajax(0,"该"+(registerType==0?"邮箱":"手机号码")+"已经被注册",null);
         }
-        String code = StringUtil.getRandomCode(4);
-        String content = "你好，验证码为："+code;
-        Mail mail = new Mail(user_mail,content);
         HttpSession session = request.getSession();
         ServletContext application = request.getServletContext();
-        session.setAttribute("mail",user_mail);
-        session.setAttribute("registerCode",code);
-        application.setAttribute("register:"+user_mail,code);
-        try {
-            MailSender.send(mail);
-        }catch (MessagingException me){
-            return AjaxReturn.Data2Ajax(0,"服务器异常",null);
+        String code = StringUtil.getRandomCode(4);
+        if (registerType == 0){
+            String content = "你好，验证码为："+code;
+            Mail mail = new Mail(account,content);
+            try {
+                MailSender.send(mail);
+            }catch (MessagingException me){
+                return AjaxReturn.Data2Ajax(0,"服务器异常",null);
+            }
+            session.setAttribute("mail",account);
+        }else {
+            PhoneMessage phoneMessage = new PhoneMessage(account,code,"注册验证");
+            PhoneSender.send(phoneMessage);
+            session.setAttribute("phone",account);
         }
+        session.setAttribute("registerCode",code);
+        application.setAttribute("register:"+account,code);
         return AjaxReturn.Data2Ajax(1,null,null);
     }
 

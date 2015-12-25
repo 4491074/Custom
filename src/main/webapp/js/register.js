@@ -25,20 +25,44 @@ var count = 60;
  */
 var codeTimer = null;
 /**
- * 用户点击获取验证码，验证用户邮箱格式
+ * 注册类型
+ * 0-邮箱，1-手机
+ */
+var registerType = 0;
+/**
+ * 用户点击获取验证码，验证用户邮箱格式或者手机号码
  *  格式错误则提示
  *  格式正确则ajax发送验证码
  */
 
-function checkMail(){
-    var mail = $("#user_mail").val().replace(/\ +/g,"");
-    $("#user_mail").val(mail);
-    if(mail == "" || mail == null){
-        errorTimer("邮箱不能为空");
-    }else if(!(/\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/.test(mail))){
-        errorTimer("邮箱格式错误");
+function checkMailorPhone(){
+    var value = $("#mail-phone").val().replace(/\ +/g,"");
+    $("#mail-phone").val(value);
+    if(value == "" || value == null){
+        errorTimer((registerType==0?"邮箱":"手机号码")+"不能为空");
+        return;
+    }
+    if((registerType == 0 && !(/\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/.test(value))) ||
+        (registerType == 1 && !(/^(13[0-9]|14[0-9]|15[0-9]|18[0-9])\d{8}$/i.test(value)))){
+        errorTimer((registerType==0?"邮箱":"手机号码")+"格式错误");
     }else {
-        submitMailAjax(mail);
+        submitMailorPhoneAjax(value);
+    }
+}
+
+/**
+ * 切换注册类型
+ */
+function changeRegisterType(type){
+    if(registerType == type){
+        return;
+    }else{
+        registerType = type;
+    }
+    if(type == 1){
+        $("#register-type").html("手机&nbsp;<span class=\"caret\"></span>");
+    }else{
+        $("#register-type").html("邮箱&nbsp;<span class=\"caret\"></span>");
     }
 }
 
@@ -71,11 +95,12 @@ function errorTimer(errorMsg){
  * ajax提交用户邮箱，验证邮箱是否可用，发送验证码
  * @param mail
  */
-function submitMailAjax(mail) {
+function submitMailorPhoneAjax(value) {
     step = 0;
     checkTimeOut();
     var params = {
-        user_mail: mail
+        registerType : registerType,
+        account : value
     }
     $.ajax({
         type : "POST",
@@ -93,6 +118,7 @@ function submitMailAjax(mail) {
         },
         error: function back(data){
             errorTimer("系统错误");
+            recoverCheck();
         }
     });
 }

@@ -62,14 +62,20 @@
 <div class="box box-current">
     <div class="error-msg">&nbsp;</div>
     <div class="input-group">
-        <span class="input-group-addon">邮箱</span>
-        <input type="text" class="form-control" placeholder="请填写用户邮箱" aria-describedby="sizing-addon2"
-            id="user_mail">
+        <div class="input-group-btn">
+            <button type="button" class="btn btn-default dropdown-toggle" id="register-type" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">邮箱 <span class="caret"></span></button>
+            <ul class="dropdown-menu">
+                <li><a href="#" onclick="changeRegisterType(0)">邮箱</a></li>
+                <li><a href="#" onclick="changeRegisterType(1)">手机</a></li>
+            </ul>
+        </div>
+        <input type="text" class="form-control" placeholder="请填写邮箱或手机号码" aria-describedby="sizing-addon2"
+            id="mail-phone">
     </div>
     <div class="input-group">
         <input type="text" class="form-control" placeholder="请输入4位验证码" id="randomCode">
         <span class="input-group-btn">
-            <button class="btn btn-default" type="button" onclick="checkMail()" id="register-button">发送验证信息</button>
+            <button class="btn btn-default" type="button" onclick="checkMailorPhone()" id="register-button">发送验证信息</button>
         </span>
     </div>
     <button type="button" class="btn btn-primary" data-toggle="button" aria-pressed="false" autocomplete="off"

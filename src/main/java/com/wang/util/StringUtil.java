@@ -25,6 +25,27 @@ public class StringUtil {
         return flag;
     }
 
+    /**
+     * 验证邮箱格式
+     * @param phoneNumber
+     * @return
+     */
+    public static boolean checkPhoneNumber(String phoneNumber){
+        boolean flag = false;
+        try{
+            String check = "^(13[0-9]|14[0-9]|15[0-9]|18[0-9])\\d{8}$";
+            Pattern regex = Pattern.compile(check);
+            Matcher matcher = regex.matcher(phoneNumber);
+            flag = matcher.matches();
+        }catch(Exception e){
+            flag = false;
+        }
+        return flag;
+    }
+
+    public static void main(String[] arg0){
+        System.out.print(checkPhoneNumber("18623657744"));
+    }
 
     /**
      * 产生n位的随机数字验证码

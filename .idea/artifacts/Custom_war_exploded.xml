@@ -1,5 +1,5 @@
 <component name="ArtifactManager">
-  <artifact type="exploded-war" name="Custom:war exploded">
+  <artifact type="exploded-war" build-on-make="true" name="Custom:war exploded">
     <output-path>$PROJECT_DIR$/target/Custom</output-path>
     <root id="root">
       <element id="directory" name="WEB-INF">
@@ -37,6 +37,7 @@
           <element id="library" level="project" name="Maven: org.springframework:spring-webmvc:4.0.2.RELEASE" />
           <element id="library" level="project" name="Maven: org.springframework:spring-expression:4.0.2.RELEASE" />
           <element id="library" level="project" name="Maven: org.springframework:spring-web:4.0.2.RELEASE" />
+          <element id="library" level="project" name="taobao-sdk-java-auto_1450195003197-20151225" />
         </element>
       </element>
       <element id="directory" name="META-INF">

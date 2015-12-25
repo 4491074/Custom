@@ -18,8 +18,13 @@ public class UserService {
         return userDao.getUserById(user_id);
     }
 
-    public int checkMail(String user_mail){
-        return userDao.checkMail(user_mail);
+    public int checkMailorPhone(int registerType,String account){
+        if(registerType == 0){
+            return userDao.checkMail(account);
+        }else if (registerType == 1){
+            return userDao.checkPhone(account);
+        }
+        return -1;
     }
 
     public int addUser(User user){

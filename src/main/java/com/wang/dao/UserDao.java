@@ -17,6 +17,9 @@ public interface UserDao {
     @Select("select count(*) from t_user where user_mail=#{0}")
     int checkMail(String user_mail);
 
+    @Select("select count(*) from t_user where user_phone=#{0}")
+    int checkPhone(String user_phone);
+
     @Insert("insert into t_user values (null,#{user_mail},#{user_name},#{user_password},null,10)")
     int addUser(User user);
 }
