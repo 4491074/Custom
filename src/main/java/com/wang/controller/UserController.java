@@ -49,14 +49,18 @@ public class UserController {
      * 验证用户是否存在
      * 验证用户是否正常
      * 验证用户密码
-     * @param user_id 用户账号
-     * @param user_password 用户密码
+     * @param account 用户账号
+     * @param password 用户密码
      * @return
      */
     @RequestMapping("userLogin")
     @ResponseBody
-    public JSONObject userLogin(int user_id, String user_password, HttpSession session){
-        User user = userService.getUserById(user_id);
+    public JSONObject userLogin(Integer loginType,String account,String password,HttpSession session){
+        if ((loginType == 0 && !StringUtil.checkEmail(account)) ||
+             (loginType == 1 && !StringUtil.checkPhoneNumber(account))){
+            return AjaxReturn.Data2Ajax(0,"登陆错误",null);
+        }
+        User user = userService.getUserByAccount(loginType,account);
         if (user == null){
             return AjaxReturn.Data2Ajax(0,"该账号没有注册",null);
         }
@@ -64,7 +68,7 @@ public class UserController {
             return AjaxReturn.Data2Ajax(0,"该账号已经冻结",null);
         }
         try{
-            if (MD5Util.validPassword(user_password,user.getUser_password())){
+            if (MD5Util.validPassword(password,user.getUser_password())){
                 user.setUser_password(null);
                 session.setAttribute("user",user);
                 return AjaxReturn.Data2Ajax(1,null,null);
@@ -89,7 +93,7 @@ public class UserController {
      */
     @RequestMapping("register1")
     @ResponseBody
-    public JSONObject register1(HttpServletRequest request, String account ,int registerType){
+    public JSONObject register1(HttpServletRequest request, String account ,Integer registerType){
         if((registerType == 0 && !StringUtil.checkEmail(account)) ||
            (registerType == 1 && !StringUtil.checkPhoneNumber(account))){
             return AjaxReturn.Data2Ajax(0,(registerType==0?"邮箱":"手机号码")+"格式错误",null);
@@ -112,7 +116,7 @@ public class UserController {
                 return AjaxReturn.Data2Ajax(0,"服务器异常",null);
             }
             session.setAttribute("mail",account);
-        }else {
+        }else if (registerType == 1){
             PhoneMessage phoneMessage = new PhoneMessage(account,code,"注册验证");
             PhoneSender.send(phoneMessage);
             session.setAttribute("phone",account);
@@ -123,8 +127,8 @@ public class UserController {
     }
 
     /**
-     * 用户注册第二步，验证邮箱验证码
-     * 从session中获取第一步中的邮箱
+     * 用户注册第二步，验证邮箱、手机验证码
+     * 从session中获取第一步中的邮箱、手机
      * 通过邮箱获取application中的code并验证
      * @param request
      * @param code
@@ -132,15 +136,15 @@ public class UserController {
      */
     @RequestMapping("register2")
     @ResponseBody
-    public JSONObject register2(HttpServletRequest request, String code){
-        if (code == null || "".equals(code)){
+    public JSONObject register2(HttpServletRequest request, String code, Integer registerType){
+        if (code == null || "".equals(code) || registerType == null){
             return AjaxReturn.Data2Ajax(0,"验证码未知错误",null);
         }
-        String user_mail = request.getSession().getAttribute("mail").toString();
-        if (user_mail == null || "".equals(user_mail)){
+        String account = request.getSession().getAttribute(registerType==0?"mail":"phone").toString();
+        if (account == null || "".equals(account)){
             return AjaxReturn.Data2Ajax(0,"请按步骤进行",null);
         }
-        String app_code = request.getServletContext().getAttribute("register:"+user_mail).toString();
+        String app_code = request.getServletContext().getAttribute("register:"+account).toString();
         if(app_code == null || "".equals(app_code)){
             return AjaxReturn.Data2Ajax(0,"请按步骤进行",null);
         }
@@ -159,31 +163,35 @@ public class UserController {
      */
     @RequestMapping("register3")
     @ResponseBody
-    public JSONObject register3(HttpServletRequest request,String user_name,String user_password){
+    public JSONObject register3(HttpServletRequest request,String user_name,String user_password,Integer registerType){
         if(user_name == null || "".equals(user_name) || user_password == null || "".equals(user_password)){
             return AjaxReturn.Data2Ajax(0,"用户信息错误",null);
         }
         HttpSession session = request.getSession();
-        String user_mail = session.getAttribute("mail").toString();
-        if(user_mail == null || "".equals(user_mail)){
+        String account = session.getAttribute(registerType==0?"mail":"phone").toString();
+        if(account == null || "".equals(account)){
             return AjaxReturn.Data2Ajax(0,"非法用户",null);
         }
         String sessionCode = session.getAttribute("registerCode").toString();
-        String applicaCode = request.getServletContext().getAttribute("register:"+user_mail).toString();
+        String applicaCode = request.getServletContext().getAttribute("register:"+account).toString();
         if(sessionCode == null || "".equals(sessionCode) || !sessionCode.equals(applicaCode)){
             return AjaxReturn.Data2Ajax(0,"用户验证失败",null);
         }
         User user = new User();
-        user.setUser_mail(user_mail);
+        if (registerType == 0){
+            user.setUser_mail(account);
+        }else if (registerType == 1){
+            user.setUser_phone(account);
+        }
         user.setUser_name(user_name);
         try {
             user.setUser_password(MD5Util.getEncryptedPwd(user_password));
         }catch (Exception e){
             return AjaxReturn.Data2Ajax(0,"系统错误",null);
         }
-        if(userService.addUser(user) == 1){
+        if(userService.addUser(registerType,user) == 1){
             JSONObject jb = new JSONObject();
-            jb.put("user_mail",user_mail);
+            jb.put("account",account);
             return AjaxReturn.Data2Ajax(1,"success",jb);
         }else{
             return AjaxReturn.Data2Ajax(0,"系统错误",null);

@@ -127,7 +127,7 @@ function submitMailorPhoneAjax(value) {
  * 设置60秒不可按
  */
 function checkTimeOut(){
-    errorTimer("验证码已发送，请注意查看邮箱");
+    errorTimer("验证码已发送，请注意查看"+(registerType==0?"邮箱":"手机"));
     count = 60;
     $("#register-button").attr("disabled","disabled");
     codeTimer = setInterval(function(){
@@ -166,6 +166,7 @@ function checkCodeAjax(){
         return;
     }
     var params = {
+        registerType : registerType,
         code : $("#randomCode").val()
     }
     $.ajax({
@@ -232,6 +233,7 @@ function submitUserInfoAjax(user_name,user_password){
         return;
     }
     var params = {
+        registerType : registerType,
         user_name : user_name,
         user_password : user_password
     }
@@ -245,7 +247,7 @@ function submitUserInfoAjax(user_name,user_password){
             if (code == 1) { //验证码通过
                 step = 3;
                 var d = r.data;
-                var mail = eval(d).user_mail;
+                var mail = eval(d).account;
                 $("#show-mail").text(mail);
                 nextStep();
             }else {

@@ -14,8 +14,13 @@ public class UserService {
     @Autowired
     private UserDao userDao;
 
-    public User getUserById(int user_id){
-        return userDao.getUserById(user_id);
+    public User getUserByAccount(Integer loginType,String account){
+        if(loginType == 0){
+            return userDao.getUserByMail(account);
+        }else if (loginType == 1){
+            return userDao.getUserByPhone(account);
+        }
+        return null;
     }
 
     public int checkMailorPhone(int registerType,String account){
@@ -27,8 +32,13 @@ public class UserService {
         return -1;
     }
 
-    public int addUser(User user){
-        return userDao.addUser(user);
+    public int addUser(int registerType,User user){
+        if (registerType == 0){
+            return userDao.addUserByMail(user);
+        }else{
+            return userDao.addUserByphone(user);
+        }
+
     }
 
 }
